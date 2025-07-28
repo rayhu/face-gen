@@ -1,0 +1,30 @@
+name: face-gen
+channels:
+  - conda-forge
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.10
+  - numpy
+  - scipy
+  - numba
+  - matplotlib
+  - ffmpeg
+  - pip
+  - pip:
+      - torch
+      - torchaudio
+      - torchvision
+      - opencv-python
+      - ffmpeg-python
+      - flask
+      - requests
+      - tortoise-tts
+      - psutil
+      - accelerate
+      - transformers==4.31.0
+      - huggingface-hub
+      - safetensors
+      - werkzeug
+      - pillow
+      - opencv-python-headless
