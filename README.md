@@ -1,4 +1,4 @@
-# Digital Avatar Generator
+# Face-Gen: Digital Avatar Generator
 
 A Flask-based web application that creates talking face videos using AI-powered text-to-speech and lip-sync technology.
 
@@ -51,16 +51,19 @@ export KMP_DUPLICATE_LIB_OK=TRUE
 python install_wav2lip.py
 ```
 
-### 3. Start the Application
+### 3. Start Face-Gen
 
 ```bash
-# Run the Flask app
+# Simple start (recommended)
+python face-gen.py
+
+# Or manual start
 python app/main.py
 ```
 
 ### 4. Access the Web Interface
 
-Open your browser and navigate to: `http://localhost:5000`
+Open your browser and navigate to the displayed URL (usually `http://localhost:5000`)
 
 ## 📁 Project Structure
 
@@ -78,6 +81,7 @@ facegen/
 ├── video/                   # Generated video files
 ├── Wav2Lip/                 # Wav2Lip installation
 ├── environment.yml          # Conda environment
+├── face-gen.py             # Simple startup script
 ├── install_wav2lip.py      # Wav2Lip installer
 └── README.md               # This file
 ```
