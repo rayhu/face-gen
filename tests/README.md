@@ -2,7 +2,7 @@
 
 This folder contains all test files for the Face-Gen digital avatar generator.
 
-## 🧪 Available Tests
+## Available Tests
 
 ### Core Tests
 - **`test_device_detection.py`** - Tests the device detection system (MPS/CUDA/CPU)
@@ -21,7 +21,7 @@ This folder contains all test files for the Face-Gen digital avatar generator.
 - **`final_test.py`** - Complete system integration tests
 - **`update_environment.py`** - Environment update and verification tests
 
-## 🚀 Running Tests
+## Running Tests
 
 ### Run All Tests
 ```bash
@@ -57,7 +57,7 @@ python tests/test_setup.py
 python tests/test_docker.py
 ```
 
-## 📊 Test Categories
+## Test Categories
 
 ### 1. Device Detection Tests
 Tests the intelligent device detection system that automatically selects the best available device (MPS/CUDA/CPU).
@@ -71,7 +71,7 @@ Tests Docker deployment and ensures the application works correctly in container
 ### 4. Performance Tests
 Benchmarks and performance comparisons between different devices and configurations.
 
-## 🔧 Test Configuration
+## Test Configuration
 
 ### Environment Setup
 ```bash
@@ -90,36 +90,36 @@ All tests require the main application dependencies to be installed:
 - Wav2Lip
 - Other dependencies listed in `requirements.txt`
 
-## 📋 Test Results
+## Test Results
 
 ### Expected Output
 ```
-🚀 Face-Gen Test Suite
+Face-Gen Test Suite
 ==================================================
 
-🧪 Running test_device_detection.py...
+Running test_device_detection.py...
 --------------------------------------------------
-✅ test_device_detection.py passed
+PASS: test_device_detection.py
 
-🧪 Running test_setup.py...
+Running test_setup.py...
 --------------------------------------------------
-✅ test_setup.py passed
+PASS: test_setup.py
 
-🧪 Running test_docker.py...
+Running test_docker.py...
 --------------------------------------------------
-✅ test_docker.py passed
+PASS: test_docker.py
 
-📋 Test Summary
+Test Summary
 ====================
-test_device_detection.py: ✅ PASS
-test_setup.py: ✅ PASS
-test_docker.py: ✅ PASS
+test_device_detection.py: PASS
+test_setup.py: PASS
+test_docker.py: PASS
 
 Overall: 3/3 tests passed
-🎉 All tests passed!
+All tests passed!
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -147,7 +147,7 @@ python -v tests/test_device_detection.py
 python -m pdb tests/test_device_detection.py
 ```
 
-## 📈 Performance Testing
+## Performance Testing
 
 ### Device Comparison
 Tests compare performance between:
@@ -161,7 +161,7 @@ Tests compare performance between:
 - **Memory Operations**: Tensor memory operations
 - **End-to-End**: Complete workflow performance
 
-## 🔄 Continuous Integration
+## Continuous Integration
 
 These tests can be integrated into CI/CD pipelines:
 
@@ -175,4 +175,4 @@ These tests can be integrated into CI/CD pipelines:
 
 ---
 
-**🎯 Test Status**: All tests are designed to ensure the Face-Gen application works correctly across different environments and configurations. 
+**Test Status**: All tests are designed to ensure the Face-Gen application works correctly across different environments and configurations. 

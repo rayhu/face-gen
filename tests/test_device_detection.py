@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 def test_device_detection():
     """Test the device detection system"""
-    print("🎭 Face-Gen Device Detection Test")
+    print("Face-Gen Device Detection Test")
     print("=" * 40)
     
     try:
@@ -23,17 +23,17 @@ def test_device_detection():
         
         device_info = get_device_info()
         
-        print("✅ Device detection test passed")
-        print(f"📊 Optimal device: {device_info['optimal_device']}")
+        print("PASS: Device detection test")
+        print(f"Optimal device: {device_info['optimal_device']}")
         
         return True
     except Exception as e:
-        print(f"❌ Device detection test failed: {e}")
+        print(f"FAIL: Device detection test - {e}")
         return False
 
 def test_environment_compatibility():
     """Test environment compatibility"""
-    print("\n🔍 Environment Compatibility Test")
+    print("\nEnvironment Compatibility Test")
     print("-" * 30)
     
     # Test Docker environment detection
@@ -60,7 +60,7 @@ def test_environment_compatibility():
 
 def test_performance_comparison():
     """Test performance comparison between devices"""
-    print("\n⚡ Performance Comparison Test")
+    print("\nPerformance Comparison Test")
     print("-" * 30)
     
     devices = ['cpu', 'mps', 'cuda']
@@ -70,10 +70,10 @@ def test_performance_comparison():
         try:
             import torch
             if device == 'mps' and not torch.backends.mps.is_available():
-                print(f"⏭️  Skipping {device.upper()} (not available)")
+                print(f"SKIP: {device.upper()} (not available)")
                 continue
             elif device == 'cuda' and not torch.cuda.is_available():
-                print(f"⏭️  Skipping {device.upper()} (not available)")
+                print(f"SKIP: {device.upper()} (not available)")
                 continue
             
             # Simple performance test
@@ -94,14 +94,14 @@ def test_performance_comparison():
             end_time = time.time()
             results[device] = end_time - start_time
             
-            print(f"✅ {device.upper()}: {results[device]:.3f} seconds")
+            print(f"PASS: {device.upper()} - {results[device]:.3f} seconds")
             
         except Exception as e:
-            print(f"❌ {device.upper()} test failed: {e}")
+            print(f"FAIL: {device.upper()} test - {e}")
     
     # Compare results
     if len(results) > 1:
-        print("\n📊 Performance Comparison:")
+        print("\nPerformance Comparison:")
         fastest = min(results, key=results.get)
         for device, time_taken in results.items():
             ratio = time_taken / results[fastest]
@@ -111,7 +111,7 @@ def test_performance_comparison():
 
 def main():
     """Main test function"""
-    print("🚀 Face-Gen Device Detection Test Suite")
+    print("Face-Gen Device Detection Test Suite")
     print("=" * 50)
     
     tests = [
@@ -126,18 +126,18 @@ def main():
             result = test_func()
             results.append((test_name, result))
         except Exception as e:
-            print(f"❌ {test_name} test crashed: {e}")
+            print(f"CRASH: {test_name} test - {e}")
             results.append((test_name, False))
     
     # Summary
-    print("\n📋 Test Summary")
+    print("\nTest Summary")
     print("=" * 20)
     
     passed = 0
     total = len(results)
     
     for test_name, result in results:
-        status = "✅ PASS" if result else "❌ FAIL"
+        status = "PASS" if result else "FAIL"
         print(f"{test_name}: {status}")
         if result:
             passed += 1
@@ -145,9 +145,9 @@ def main():
     print(f"\nOverall: {passed}/{total} tests passed")
     
     if passed == total:
-        print("🎉 All tests passed! Device detection is working correctly.")
+        print("All tests passed! Device detection is working correctly.")
     else:
-        print("⚠️  Some tests failed. Check the output above for details.")
+        print("Some tests failed. Check the output above for details.")
     
     return passed == total
 

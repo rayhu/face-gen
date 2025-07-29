@@ -219,12 +219,21 @@
                     imagePreview.style.display = 'block';
                 };
                 reader.readAsDataURL(file);
+            } else {
+                alert('Please select a valid image file (PNG, JPG, JPEG, GIF)');
             }
         }
 
         // Form submission
         document.getElementById('avatarForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            // Check if file is selected
+            const fileInput = document.getElementById('faceImage');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Please select an image file first');
+                return;
+            }
             
             const formData = new FormData(e.target);
             const generateBtn = document.getElementById('generateBtn');
@@ -240,7 +249,7 @@
             errorSection.style.display = 'none';
             
             try {
-                const response = await fetch('/', {
+                const response = await fetch('/generate', {
                     method: 'POST',
                     body: formData
                 });
@@ -250,8 +259,17 @@
                 if (result.success) {
                     // Show result
                     resultSection.style.display = 'block';
-                    document.getElementById('resultVideo').src = `/download/${result.unique_id}`;
-                    document.getElementById('downloadBtn').href = `/download/${result.unique_id}`;
+                    const videoElement = document.getElementById('resultVideo');
+                    const downloadBtn = document.getElementById('downloadBtn');
+                    
+                    // Set video source for playback
+                    videoElement.src = result.download_url;
+                    
+                    // Set download link with download parameter
+                    downloadBtn.href = result.download_url + '?download=true';
+                    
+                    // Load video
+                    videoElement.load();
                 } else {
                     throw new Error(result.error || 'Generation failed');
                 }

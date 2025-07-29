@@ -18,8 +18,8 @@ def generate_tts(text, output_path="audio/ray_audio.wav"):
     """
     # Get optimal device for current environment
     device = get_optimal_device()
-    print(f"✅ Using device: {device}")
-    print(f"🎤 Initializing Tortoise TTS on device: {device}")
+    print(f"Using device: {device}")
+    print(f"Initializing Tortoise TTS on device: {device}")
     
     try:
         tts = TextToSpeech()
@@ -27,7 +27,7 @@ def generate_tts(text, output_path="audio/ray_audio.wav"):
         # Configure models for the optimal device
         if device == 'mps':
             try:
-                print("🚀 Attempting to use MPS acceleration...")
+                print("Attempting to use MPS acceleration...")
                 if hasattr(tts, 'autoregressive'):
                     tts.autoregressive = configure_device_for_model(tts.autoregressive, 'mps')
                 if hasattr(tts, 'diffusion'):
@@ -36,15 +36,15 @@ def generate_tts(text, output_path="audio/ray_audio.wav"):
                     tts.vocoder = configure_device_for_model(tts.vocoder, 'mps')
                 if hasattr(tts, 'clvp'):
                     tts.clvp = configure_device_for_model(tts.clvp, 'mps')
-                print("✅ Models configured for MPS device")
+                print("Models configured for MPS device")
             except Exception as e:
-                print(f"⚠️  MPS configuration failed, falling back to CPU: {str(e)}")
+                print(f"MPS configuration failed, falling back to CPU: {str(e)}")
                 device = 'cpu'
-                print(f"🔄 Switching to device: {device}")
+                print(f"Switching to device: {device}")
         
         elif device == 'cuda':
             try:
-                print("🚀 Attempting to use CUDA acceleration...")
+                print("Attempting to use CUDA acceleration...")
                 if hasattr(tts, 'autoregressive'):
                     tts.autoregressive = configure_device_for_model(tts.autoregressive, 'cuda')
                 if hasattr(tts, 'diffusion'):
@@ -53,19 +53,19 @@ def generate_tts(text, output_path="audio/ray_audio.wav"):
                     tts.vocoder = configure_device_for_model(tts.vocoder, 'cuda')
                 if hasattr(tts, 'clvp'):
                     tts.clvp = configure_device_for_model(tts.clvp, 'cuda')
-                print("✅ Models configured for CUDA device")
+                print("Models configured for CUDA device")
             except Exception as e:
-                print(f"⚠️  CUDA configuration failed, falling back to CPU: {str(e)}")
+                print(f"CUDA configuration failed, falling back to CPU: {str(e)}")
                 device = 'cpu'
-                print(f"🔄 Switching to device: {device}")
+                print(f"Switching to device: {device}")
         
-        print("🎵 Generating speech...")
+        print("Generating speech...")
         start_time = time.time()
         
         gen_audio = tts.tts(text)
         
         end_time = time.time()
-        print(f"⏱️  Generation time: {end_time - start_time:.2f} seconds")
+        print(f"Generation time: {end_time - start_time:.2f} seconds")
         
         # Move audio data back to CPU and save
         if device in ['mps', 'cuda']:
@@ -74,12 +74,12 @@ def generate_tts(text, output_path="audio/ray_audio.wav"):
         # Ensure output directory exists
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         torchaudio.save(output_path, gen_audio.squeeze(0), 24000)
-        print("✅ TTS saved to", output_path)
+        print("TTS saved to", output_path)
         return True
         
     except Exception as e:
-        print(f"❌ TTS generation failed: {str(e)}")
-        print("🔄 Attempting to regenerate with CPU...")
+        print(f"TTS generation failed: {str(e)}")
+        print("Attempting to regenerate with CPU...")
         
         # Fallback to CPU
         device = 'cpu'
@@ -89,13 +89,14 @@ def generate_tts(text, output_path="audio/ray_audio.wav"):
             gen_audio = tts.tts(text)
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             torchaudio.save(output_path, gen_audio.squeeze(0), 24000)
-            print("✅ TTS generated successfully on CPU")
+            print("TTS generated successfully on CPU")
             return True
         except Exception as e2:
-            print(f"❌ CPU generation also failed: {str(e2)}")
+            print(f"CPU generation also failed: {str(e2)}")
             return False
 
 if __name__ == "__main__":
+    # This part is for standalone testing, not used by Flask app directly
     with open("assets/script.txt", "r", encoding="utf-8") as f:
         text = f.read()
     generate_tts(text)

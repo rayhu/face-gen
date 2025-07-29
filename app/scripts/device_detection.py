@@ -5,189 +5,211 @@ Automatically detects and configures the best available device for AI processing
 """
 
 import os
-import torch
 import platform
-import subprocess
+import torch
+import psutil
 
 def detect_environment():
-    """Detect the current environment (Docker, local, cloud)"""
-    # Check if running in Docker
-    docker_env = os.path.exists('/.dockerenv')
+    """
+    Detect the current environment (Docker, local, OS, architecture)
     
-    # Check if running in Kubernetes
-    k8s_env = os.path.exists('/var/run/secrets/kubernetes.io/')
-    
-    # Check OS
-    os_name = platform.system()
-    os_version = platform.release()
-    
-    return {
-        'docker': docker_env,
-        'kubernetes': k8s_env,
-        'os': os_name,
-        'os_version': os_version,
-        'architecture': platform.machine()
+    Returns:
+        dict: Environment information
+    """
+    env_info = {
+        'is_docker': os.path.exists('/.dockerenv'),
+        'os': platform.system(),
+        'architecture': platform.machine(),
+        'python_version': platform.python_version(),
+        'conda_env': os.environ.get('CONDA_DEFAULT_ENV', 'Not using conda')
     }
+    return env_info
 
 def detect_mps_availability():
-    """Detect MPS availability with detailed checks"""
+    """
+    Check if MPS (Metal Performance Shaders) is available
+    
+    Returns:
+        dict: MPS availability information
+    """
+    mps_info = {
+        'available': False,
+        'functional': False,
+        'reason': 'Not available'
+    }
+    
     try:
         # Check if PyTorch supports MPS
-        mps_available = torch.backends.mps.is_available()
-        
-        if not mps_available:
-            return {
-                'available': False,
-                'reason': 'PyTorch MPS not available',
-                'device': 'cpu'
-            }
-        
-        # Check if we can actually use MPS
-        try:
-            test_tensor = torch.randn(1, 1).to('mps')
-            test_result = test_tensor + test_tensor
-            mps_working = True
-        except Exception as e:
-            mps_working = False
-            mps_error = str(e)
-        
-        if mps_working:
-            return {
-                'available': True,
-                'reason': 'MPS available and working',
-                'device': 'mps'
-            }
+        if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            mps_info['available'] = True
+            
+            # Test if MPS actually works
+            try:
+                test_tensor = torch.randn(1, 1).to('mps')
+                test_result = test_tensor + test_tensor
+                mps_info['functional'] = True
+                mps_info['reason'] = 'Available and functional'
+            except Exception as e:
+                mps_info['reason'] = f'Available but not functional: {str(e)}'
         else:
-            return {
-                'available': False,
-                'reason': f'MPS available but not working: {mps_error}',
-                'device': 'cpu'
-            }
+            mps_info['reason'] = 'PyTorch MPS not available'
             
     except Exception as e:
-        return {
-            'available': False,
-            'reason': f'MPS detection failed: {str(e)}',
-            'device': 'cpu'
-        }
+        mps_info['reason'] = f'Error checking MPS: {str(e)}'
+    
+    return mps_info
 
 def detect_cuda_availability():
-    """Detect CUDA availability"""
+    """
+    Check if CUDA is available
+    
+    Returns:
+        dict: CUDA availability information
+    """
+    cuda_info = {
+        'available': False,
+        'functional': False,
+        'reason': 'Not available'
+    }
+    
     try:
-        cuda_available = torch.cuda.is_available()
-        if cuda_available:
-            return {
-                'available': True,
-                'device': 'cuda',
-                'count': torch.cuda.device_count(),
-                'current': torch.cuda.current_device(),
-                'name': torch.cuda.get_device_name(0)
-            }
+        if torch.cuda.is_available():
+            cuda_info['available'] = True
+            
+            # Test if CUDA actually works
+            try:
+                test_tensor = torch.randn(1, 1).to('cuda')
+                test_result = test_tensor + test_tensor
+                cuda_info['functional'] = True
+                cuda_info['reason'] = 'Available and functional'
+            except Exception as e:
+                cuda_info['reason'] = f'Available but not functional: {str(e)}'
         else:
-            return {
-                'available': False,
-                'device': 'cpu'
-            }
+            cuda_info['reason'] = 'PyTorch CUDA not available'
+            
     except Exception as e:
-        return {
-            'available': False,
-            'device': 'cpu',
-            'error': str(e)
-        }
+        cuda_info['reason'] = f'Error checking CUDA: {str(e)}'
+    
+    return cuda_info
 
 def get_optimal_device():
-    """Get the optimal device for the current environment"""
+    """
+    Determine the optimal device for the current environment
+    
+    Returns:
+        str: Optimal device ('mps', 'cuda', or 'cpu')
+    """
     env_info = detect_environment()
     mps_info = detect_mps_availability()
     cuda_info = detect_cuda_availability()
     
-    print("🔍 Device Detection Results:")
-    print(f"   Environment: {'Docker' if env_info['docker'] else 'Local'}")
-    print(f"   OS: {env_info['os']} {env_info['os_version']}")
-    print(f"   Architecture: {env_info['architecture']}")
-    print(f"   MPS: {'✅ Available' if mps_info['available'] else '❌ Not available'}")
-    print(f"   CUDA: {'✅ Available' if cuda_info['available'] else '❌ Not available'}")
-    
-    # Priority order: MPS > CUDA > CPU
-    if mps_info['available'] and not env_info['docker']:
-        print("🎯 Using MPS (Apple Silicon GPU)")
+    # Priority: MPS > CUDA > CPU
+    if mps_info['functional'] and not env_info['is_docker']:
         return 'mps'
-    elif cuda_info['available']:
-        print("🎯 Using CUDA (NVIDIA GPU)")
+    elif cuda_info['functional']:
         return 'cuda'
     else:
-        print("🎯 Using CPU (fallback)")
         return 'cpu'
 
 def configure_device_for_model(model, device):
-    """Configure a model for the specified device"""
+    """
+    Move a PyTorch model to the specified device
+    
+    Args:
+        model: PyTorch model
+        device (str): Target device ('mps', 'cuda', 'cpu')
+    
+    Returns:
+        model: Model moved to the specified device
+    """
     try:
         if device == 'mps':
-            # Special handling for MPS
             model = model.to('mps')
-            print("✅ Model moved to MPS device")
+            print("Model moved to MPS device")
         elif device == 'cuda':
-            # CUDA handling
             model = model.to('cuda')
-            print("✅ Model moved to CUDA device")
+            print("Model moved to CUDA device")
         else:
-            # CPU handling
             model = model.to('cpu')
-            print("✅ Model moved to CPU device")
-        
+            print("Model moved to CPU device")
         return model
     except Exception as e:
-        print(f"⚠️  Failed to move model to {device}, falling back to CPU: {e}")
+        print(f"Failed to move model to {device}, falling back to CPU: {e}")
         return model.to('cpu')
 
 def get_device_info():
-    """Get comprehensive device information"""
+    """
+    Get comprehensive device information
+    
+    Returns:
+        dict: Device information
+    """
     env_info = detect_environment()
     mps_info = detect_mps_availability()
     cuda_info = detect_cuda_availability()
     optimal_device = get_optimal_device()
     
-    return {
+    device_info = {
         'environment': env_info,
         'mps': mps_info,
         'cuda': cuda_info,
         'optimal_device': optimal_device,
-        'recommendations': get_recommendations(env_info, mps_info, cuda_info)
+        'recommendations': get_recommendations(env_info, mps_info, cuda_info, optimal_device)
     }
+    
+    return device_info
 
-def get_recommendations(env_info, mps_info, cuda_info):
-    """Get recommendations for optimal performance"""
+def get_recommendations(env_info, mps_info, cuda_info, optimal_device):
+    """
+    Get performance recommendations based on device configuration
+    
+    Returns:
+        list: List of recommendations
+    """
     recommendations = []
     
-    if env_info['docker']:
-        recommendations.append("🐳 Running in Docker - MPS may not be available")
-        recommendations.append("💡 Consider using host networking for better performance")
+    if optimal_device == 'mps':
+        recommendations.append("Using MPS (Apple Silicon GPU)")
+        recommendations.append("Expect 2-5x performance improvement for large operations")
+    elif optimal_device == 'cuda':
+        recommendations.append("Using CUDA (NVIDIA GPU)")
+        recommendations.append("Expect significant performance improvement")
+    else:
+        recommendations.append("Using CPU (fallback)")
+        recommendations.append("Large operations may be slower")
     
-    if mps_info['available'] and not env_info['docker']:
-        recommendations.append("🍎 Apple Silicon detected - MPS acceleration available")
-        recommendations.append("⚡ Expect 2-5x performance improvement for large operations")
-    
-    if cuda_info['available']:
-        recommendations.append("🟢 CUDA detected - GPU acceleration available")
-        recommendations.append("🚀 Expect significant performance improvement")
-    
-    if not mps_info['available'] and not cuda_info['available']:
-        recommendations.append("💻 CPU-only mode - Consider upgrading for better performance")
-        recommendations.append("📈 Large operations may be slower")
+    if env_info['is_docker']:
+        recommendations.append("Running in Docker - MPS not available in containers")
     
     return recommendations
 
-if __name__ == "__main__":
-    print("🎭 Face-Gen Device Detection")
+def main():
+    """Main function for device detection"""
+    print("Face-Gen Device Detection")
     print("=" * 40)
     
     device_info = get_device_info()
     
-    print("\n📊 Summary:")
-    print(f"   Optimal Device: {device_info['optimal_device'].upper()}")
+    print("Device Detection Results:")
+    print("-" * 30)
+    print(f"   MPS: {'Available' if device_info['mps']['available'] else 'Not available'}")
+    print(f"   CUDA: {'Available' if device_info['cuda']['available'] else 'Not available'}")
+    print(f"   Environment: {device_info['environment']['os']} on {device_info['environment']['architecture']}")
     
-    print("\n💡 Recommendations:")
+    if device_info['optimal_device'] == 'mps':
+        print("Using MPS (Apple Silicon GPU)")
+    elif device_info['optimal_device'] == 'cuda':
+        print("Using CUDA (NVIDIA GPU)")
+    else:
+        print("Using CPU (fallback)")
+    
+    print("\nSummary:")
     for rec in device_info['recommendations']:
-        print(f"   • {rec}")
+        print(f"   - {rec}")
     
-    print(f"\n🎯 Ready to use device: {device_info['optimal_device']}") 
+    print(f"\nReady to use device: {device_info['optimal_device']}")
+    
+    return device_info
+
+if __name__ == "__main__":
+    main() 
